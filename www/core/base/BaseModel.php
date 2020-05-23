@@ -23,9 +23,11 @@ abstract class BaseModel extends BaseObject
      */
     public function validate()
     {
-        $validationRules = $this->getRules();
-
-
+        foreach ($this->validators as $attribute => $validator) {
+            if (!$validator->validate()) {
+                $this->addError($attribute, $validator->getMessage());
+            }
+        }
 
         return !$this->hasErrors();
     }
@@ -80,12 +82,26 @@ abstract class BaseModel extends BaseObject
     protected abstract function getRules();
 
     /**
+     * Создаёт валидаторы
      *
+     * @throws \Exception
      */
     private function createValidators()
     {
-        foreach ($this->getRules() as $validatorName => $params) {
-            $this->validators = Validator::createValidator($validatorName, $params);
+        foreach ($this->getRules() as $rule) {
+            $validatorClass = 'core\Validators\\' . ucfirst($rule['validator']) . 'Validator';
+
+            if ($validatorClass instanceof Validator) {
+                foreach ($rule['attributes'] as $attribute) {
+                    $this->validators[$attribute][] = Validator::createValidator(
+                        $rule['validator'],
+                        $this->$attribute,
+                        $rule['params']
+                    );
+                }
+            } else {
+                throw new \Exception('Не существующий валидатор: ' . $rule['validator']);
+            }
         }
     }
 }
