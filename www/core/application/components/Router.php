@@ -18,7 +18,7 @@ final class Router
      */
     public static function run()
     {
-        $uri = Server::getUri();
+        $uri = ServerUtils::getUri();
 
         if (!array_key_exists($uri ,self::$routes)) {
             $uriParts = explode('/', $uri);
