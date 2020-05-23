@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  nginx:
+    build: ./docker/nginx
+    depends_on:
+      - php-fpm
+    ports:
+      - 8200:80
+    volumes:
+      - ./www:/var/www:delegated
+    env_file:
+      - .env
+    restart: always
+
+  php-fpm:
+    build: ./docker/php-fpm
+    depends_on:
+      - mariadb
+    env_file:
+      - .env
+    volumes:
+      - ./www:/var/www:delegated
+    restart: always
+
+  mariadb:
+    build: ./docker/mariadb
+    volumes:
+      - db:/var/lib/mysql
+    env_file:
+      - .env
+    restart: always
+
+volumes:
+  db:
