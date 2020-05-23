@@ -4,8 +4,24 @@
 namespace core\base;
 
 
+use ReflectionClass;
+
 class BaseObject
 {
+    /**
+     * BaseModel constructor.
+     *
+     * @param array $config
+     */
+    public function __construct($config = [])
+    {
+        if (!empty($config)) {
+            $this->load($config);
+        }
+
+        $this->init();
+    }
+
     /**
      * Получение существующего поля класса
      *
@@ -72,7 +88,77 @@ class BaseObject
         if (method_exists($this, $setter)) {
             $this->$setter(null);
         } elseif (method_exists($this, 'get' . $name)) {
-            throw new \Exception('Unsetting read-only property: ' . get_class($this) . '::' . $name);
+            throw new \Exception('Снятие свойства только для чтения: ' . get_class($this) . '::' . $name);
         }
+    }
+
+    /**
+     * Получает названя полей
+     *
+     * @return array
+     *
+     * @throws \ReflectionException
+     */
+    public function attributes()
+    {
+        $class = new ReflectionClass($this);
+        $names = [];
+        foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
+            if (!$property->isStatic()) {
+                $names[] = $property->getName();
+            }
+        }
+        return $names;
+    }
+
+    /**
+     * Получает массив полей
+     *
+     * @param null $names
+     * @param array $except
+     *
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function getAttributes($names = null, $except = [])
+    {
+        $values = [];
+
+        if ($names === null) {
+            $names = $this->attributes();
+        }
+
+        foreach ($names as $name) {
+            $values[$name] = $this->$name;
+        }
+
+        foreach ($except as $name) {
+            unset($values[$name]);
+        }
+
+        return $values;
+    }
+
+    /**
+     * Заполняет поля класса
+     *
+     * @param array $values
+     */
+    public function load($values)
+    {
+        if (is_array($values)) {
+            foreach ($values as $attribute => $value) {
+                if (property_exists($this, $attribute)) {
+                    $this->$attribute = $value;
+                }
+            }
+        }
+    }
+
+    /**
+     * Метод избавляющий от необходимости переопределять конструктор
+     */
+    public function init()
+    {
     }
 }

@@ -3,92 +3,89 @@
 
 namespace core\base;
 
-use core\base\BaseObject;
-use \ReflectionClass;
+use core\validators\Validator;
 
-class BaseModel extends BaseObject
+/**
+ * Class BaseModel
+ */
+abstract class BaseModel extends BaseObject
 {
-    /**
-     * BaseModel constructor.
-     *
-     * @param array $config
-     */
-    public function __construct($config = [])
-    {
-        if (!empty($config)) {
-            $this->load($config);
-        }
+    /** @var array[] Массив ошибок */
+    private $errors = [];
 
-        $this->init();
+    /** @var array Массив валидаторов */
+    private $validators;
+
+    /**
+     * Валидация полей
+     *
+     * @return bool
+     */
+    public function validate()
+    {
+        $validationRules = $this->getRules();
+
+
+
+        return !$this->hasErrors();
     }
 
     /**
-     * Получение названий полей
+     * Есть ли ошибки?
+     *
+     * @return bool
+     */
+    public function hasErrors()
+    {
+        return empty($this->errors);
+    }
+
+    /**
+     * Получить ошибку для атрибута
+     *
+     * @param $attribute
+     * @return string
+     */
+    public function getError($attribute)
+    {
+        return isset($this->errors[$attribute]) ? implode('. ', $this->errors[$attribute]) : null;
+    }
+
+    /**
+     * Получить все ошибки
      *
      * @return array
-     *
-     * @throws \ReflectionException
      */
-    public function attributes()
+    public function getErrors()
     {
-        $class = new ReflectionClass($this);
-        $names = [];
-        foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
-            if (!$property->isStatic()) {
-                $names[] = $property->getName();
-            }
-        }
-        return $names;
+        return $this->errors;
     }
 
     /**
-     * Получение массива полей
+     * Добавить ошибку для поля
      *
-     * @param null $names
-     * @param array $except
+     * @param $attribute
+     * @param $message
+     */
+    public function addError($attribute, $message)
+    {
+        $this->errors[$attribute][] = $message;
+    }
+
+    /**
+     * Получение правил валидации
      *
      * @return array
-     * @throws \ReflectionException
      */
-    public function getAttributes($names = null, $except = [])
-    {
-        $values = [];
-
-        if ($names === null) {
-            $names = $this->attributes();
-        }
-
-        foreach ($names as $name) {
-            $values[$name] = $this->$name;
-        }
-
-        foreach ($except as $name) {
-            unset($values[$name]);
-        }
-
-        return $values;
-    }
+    protected abstract function getRules();
 
     /**
-     * Заполнение полей класса
      *
-     * @param array $values
      */
-    public function load($values)
+    private function createValidators()
     {
-        if (is_array($values)) {
-            foreach ($values as $attribute => $value) {
-                if (property_exists($this, $attribute)) {
-                    $this->$attribute = $value;
-                }
-            }
+        foreach ($this->getRules() as $validatorName => $params) {
+            $this->validators = Validator::createValidator($validatorName, $params);
         }
-    }
-
-    /**
-     * Метод избавляющий от необходимости переопределять конструктор
-     */
-    public function init()
-    {
     }
 }
