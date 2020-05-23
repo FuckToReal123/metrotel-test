@@ -3,19 +3,21 @@
 
 namespace core\application;
 
-
-use core\application\components\DbConnect;
+use core\application\components\DbConnection;
 use core\application\components\Router;
 use core\application\components\Session;
 use models\User;
 
+/**
+ * Class Application
+ */
 class Application
 {
     /** @var Session */
     public $session;
     /** @var User */
     public $user;
-    /** @var DbConnect */
+    /** @var DbConnection */
     public $db;
 
 
@@ -32,7 +34,7 @@ class Application
     public static function getInstance()
     {
         if (!self::$instance) {
-            self::$instance = new static();
+            self::$instance = new self;
         }
 
         return self::$instance;
@@ -55,10 +57,9 @@ class Application
     {
         $this->session = new Session();
         $this->router = new Router();
-        $this->db = new DbConnect();
+        $this->db = DbConnection::getInstance();
     }
 
-    protected function __clone() {}
-
-    protected function __wakeup() {}
+    private function __clone() {}
+    private function __wakeup() {}
 }
