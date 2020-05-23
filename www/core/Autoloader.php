@@ -22,7 +22,7 @@ class Autoloader
         $filePath = ROOT_DIR . str_replace('\\', DIRECTORY_SEPARATOR, $className) . '.php';
 
         if (file_exists($filePath)) {
-            require_once($filePath);
+            require_once $filePath;
         }
     }
 }

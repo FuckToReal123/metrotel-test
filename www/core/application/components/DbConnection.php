@@ -11,6 +11,8 @@ class DbConnection
     private static $instance;
 
     /**
+     * Получает экземпляр класса
+     *
      * @return DbConnection|PDO
      */
     public static function getInstance()
@@ -26,7 +28,7 @@ class DbConnection
      * DbConnection constructor.
      */
     private function __construct () {
-        $config = require_once(ROOT_DIR . 'config/db.php');
+        $config = require_once ROOT_DIR . 'config/db.php';
 
         $this->instance = new PDO(
             $config['dsn'],

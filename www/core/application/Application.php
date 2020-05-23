@@ -47,7 +47,24 @@ class Application
     {
         $this->session->start();
         $this->router->run();
-        $this->db->connect();
+        $this->db->getInstance();
+    }
+
+    /**
+     * Удобный вид дампа
+     *
+     * @param $data
+     * @param bool $stop
+     */
+    public static function dump($data, $stop = false)
+    {
+        echo '<pre>';
+        var_export($data);
+        echo '</pre>';
+
+        if ($stop) {
+            die;
+        }
     }
 
     /**
