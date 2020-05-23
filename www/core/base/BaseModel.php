@@ -12,7 +12,6 @@ abstract class BaseModel extends BaseObject
 {
     /** @var array[] Массив ошибок */
     private $errors = [];
-
     /** @var array Массив валидаторов */
     private $validators;
 
