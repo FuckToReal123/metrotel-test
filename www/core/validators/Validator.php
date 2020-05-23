@@ -4,12 +4,10 @@
 namespace core\validators;
 
 
-use core\base\BaseObject;
-
 /**
  * Class Validator
  */
-abstract class Validator extends BaseObject
+abstract class Validator
 {
     /** @var bool Может ли быть пустым? */
     public $allowEmpty = true;
@@ -19,11 +17,24 @@ abstract class Validator extends BaseObject
     protected $message;
 
     /**
+     * Validator constructor.
+     *
+     * @param mixed $value
+     * @param array $params
+     */
+    public function __construct($value, $params = [])
+    {
+        $this->value = $value;
+        $this->load($params);
+    }
+
+    /**
      * Создание валидатора
      *
-     * @param $name
+     * @param string $name
+     * @param mixed $value
      * @param array $params
-     * @return mixed
+     * @return Validator
      */
     public static function createValidator($name, $value, $params = [])
     {
@@ -39,8 +50,29 @@ abstract class Validator extends BaseObject
      */
     abstract public function validate();
 
+    /**
+     * Возвращает сообщение об ошибке
+     *
+     * @return string
+     */
     public function getMessage()
     {
         return $this->message;
+    }
+
+    /**
+     * Заполняет поля класса
+     *
+     * @param array $values
+     */
+    public function load($values)
+    {
+        if (is_array($values)) {
+            foreach ($values as $attribute => $value) {
+                if (property_exists($this, $attribute) && $attribute !== 'value') {
+                    $this->$attribute = $value;
+                }
+            }
+        }
     }
 }

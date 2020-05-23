@@ -4,7 +4,7 @@
 namespace core\validators;
 
 
-class BoolValidator
+class BoolValidator extends Validator
 {
 
 }

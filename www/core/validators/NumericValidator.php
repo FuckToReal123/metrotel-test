@@ -4,7 +4,7 @@
 namespace core\validators;
 
 
-class NumericValidator
+class NumericValidator extends Validator
 {
 
 }

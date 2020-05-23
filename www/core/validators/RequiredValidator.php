@@ -4,7 +4,7 @@
 namespace core\validators;
 
 
-class RequiredValidator
+class RequiredValidator extends Validator
 {
 
 }

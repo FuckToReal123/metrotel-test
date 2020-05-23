@@ -4,7 +4,7 @@
 namespace core\validators;
 
 
-class StringValidator
+class StringValidator extends Validator
 {
 
 }
