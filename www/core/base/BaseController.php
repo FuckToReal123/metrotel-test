@@ -6,7 +6,7 @@ namespace core\base;
 /**
  * Class BaseController
  */
-abstract class BaseController
+class BaseController
 {
     /** @var string Директория с представлениями */
     const BASE_VIEWS_DIR = ROOT_DIR . 'views/';

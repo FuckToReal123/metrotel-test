@@ -25,17 +25,15 @@ final class Router
             $controllerName = ucfirst(array_shift($uriParts)) . 'Controller';
             $actionName = 'action' . ucfirst(array_shift($uriParts));
 
-            self::addRoute($uri, $controllerName, $actionName, $uriParts);
+            if(self::callAction($controllerName, $actionName, $uriParts)) {
+                self::addRoute($uri, $controllerName, $actionName, $uriParts);
+            }
         }
-
-        $route = self::$routes[$uri];
-
-        self::callAction($route['controller'], $route['action'], $route['params']);
     }
 
 
     private static function callAction($controllerName, $actionName, $params = []) {
-        $controllerClass = '\controllers\\' . $controllerName;
+        $controllerClass = 'controllers\\' . $controllerName;
 
         if (class_exists($controllerClass)) {
             $controller = new $controllerClass();
@@ -74,7 +72,7 @@ final class Router
     private static function httpNotFound()
     {
         $controller = new ErrorController();
-        $controller->actionError(404);
+        $controller->action404();
         return false;
     }
 }

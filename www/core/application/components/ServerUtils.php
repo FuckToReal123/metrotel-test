@@ -19,6 +19,8 @@ final class ServerUtils
      */
     public static function getUri()
     {
+        $uri = $_SERVER['REQUEST_URI'];
+
         if (!empty($uri) && $uri != '/') {
             return strtok(trim($_SERVER['REQUEST_URI'], '/'), '?');
         }
