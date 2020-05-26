@@ -21,4 +21,4 @@ RUN docker-php-ext-configure gd \
 
 RUN docker-php-ext-install gd
 
-RUN chmod -R 777 /var/www
+RUN chmod -R 777 /var/www/

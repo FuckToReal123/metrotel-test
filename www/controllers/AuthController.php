@@ -10,6 +10,6 @@ class AuthController extends BaseController
 {
     public function actionIndex()
     {
-        $this->render('index', ['a' => 'b']);
+        return $this->render('index', ['a' => 'fuck']);
     }
 }

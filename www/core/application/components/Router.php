@@ -11,7 +11,7 @@ use controllers\ErrorController;
 final class Router
 {
     /** @var array Маршруты */
-    private static $routes;
+    private static $routes = [];
 
     /**
      * Запуск обработки маршрутов
@@ -20,7 +20,7 @@ final class Router
     {
         $uri = ServerUtils::getUri();
 
-        if (!array_key_exists($uri ,self::$routes)) {
+        if (!array_key_exists($uri, self::$routes)) {
             $uriParts = explode('/', $uri);
             $controllerName = ucfirst(array_shift($uriParts)) . 'Controller';
             $actionName = 'action' . ucfirst(array_shift($uriParts));
@@ -31,7 +31,14 @@ final class Router
         }
     }
 
-
+    /**
+     * Вызывает экшен
+     *
+     * @param $controllerName
+     * @param $actionName
+     * @param array $params
+     * @return bool
+     */
     private static function callAction($controllerName, $actionName, $params = []) {
         $controllerClass = 'controllers\\' . $controllerName;
 
@@ -40,7 +47,6 @@ final class Router
 
             if (method_exists($controller, $actionName)) {
                 call_user_func_array([$controller, $actionName], $params);
-                return true;
             }
         }
 

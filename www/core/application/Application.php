@@ -48,6 +48,8 @@ class Application
         $this->session->start();
         $this->router->run();
         $this->db->getInstance();
+
+        $this->user = new User();
     }
 
     /**

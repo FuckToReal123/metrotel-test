@@ -25,6 +25,8 @@ services:
 
   mariadb:
     build: ./docker/mariadb
+    ports:
+      - 3310:3306
     volumes:
       - db:/var/lib/mysql
     env_file:

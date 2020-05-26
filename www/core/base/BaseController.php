@@ -8,12 +8,7 @@ namespace core\base;
  */
 class BaseController
 {
-    /** @var string Директория с представлениями */
-    const BASE_VIEWS_DIR = ROOT_DIR . 'views/';
-    /** @var string Директория с лейаутами */
-    const LAYOUTS_DIR = ROOT_DIR . 'layouts/';
-
-    /** @var string Название лейаута */
+    /** @var array Название лейаута */
     private $layout;
     /** @var string Директори с представлениями относящимися к контроллеру */
     private $viewsDir;
@@ -21,18 +16,21 @@ class BaseController
     /**
      * BaseController constructor.
      *
-     * @param string $layout
+     * @param string $layoutName
      */
-    public function __construct($layout = 'default')
+    public function __construct($layoutName = 'default')
     {
-        $this->viewsDir = self::BASE_VIEWS_DIR .
+        $this->viewsDir = ROOT_DIR . 'views/' .
             strtolower(str_replace(
-                'Controller',
-                DIRECTORY_SEPARATOR,
+                ['Controller', 'controllers\\'],
+                '',
                 static::class
-            ));
+            )) . '/';
 
-        $this->layout = $layout;
+        $this->layout = [
+            'header' => ROOT_DIR . 'layouts/' . $layoutName . '/header.php',
+            'footer' => ROOT_DIR . 'layouts/' . $layoutName . '/footer.php'
+        ];
     }
 
     /**
@@ -45,11 +43,11 @@ class BaseController
     {
         ob_start();
 
-        $this->getLayoutHeader();
-        $this->getContent($view, $data);
-        $this->getLayOutFooter();
+        $this->getFileContent($this->layout['header'], $data);
+        $this->getFileContent($this->viewsDir . $view . '.php', $data);
+        $this->getFileContent($this->layout['footer'], $data);
 
-        return ob_clean();
+        echo ob_get_clean();
     }
 
     /**
@@ -62,42 +60,24 @@ class BaseController
     {
         ob_start();
 
-        $this->getContent($view, $data);
+        $this->getFileContent($this->viewsDir . $view . '.php', $data);
 
-        return ob_clean();
+        echo ob_get_clean();
     }
 
     /**
      * Возвращает контент для отрисовки
      *
-     * @param $view
+     * @param string $path
      * @param array $data
      * @return mixed
      */
-    private function getContent($view, $data = [])
+    private function getFileContent($path, $data)
     {
-        extract($data);
+        if (!empty($data)) {
+            extract($data);
+        }
 
-        return require $this->viewsDir . $view . '.php';
-    }
-
-    /**
-     * Возвращает хэдер
-     *
-     * @return mixed
-     */
-    private function getLayoutHeader()
-    {
-        return require self::LAYOUTS_DIR . $this->layout . '/header.php';
-    }
-
-    /**
-     * Возвращает футер
-     *
-     * @return mixed
-     */
-    private function getLayoutFooter()
-    {
-        return require self::LAYOUTS_DIR . $this->layout . '/footer.php';
+        return require $path;
     }
 }
