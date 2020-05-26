@@ -9,6 +9,8 @@ class DbConnection
 {
     /** @var PDO  */
     private static $instance;
+    /** @var array */
+    private static $config;
 
     /**
      * Получает экземпляр класса
@@ -22,6 +24,16 @@ class DbConnection
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Возвращает название базы
+     *
+     * @return string
+     */
+    public static function getDbName()
+    {
+        return getenv('MYSQL_DATABASE');
     }
 
     /**

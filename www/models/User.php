@@ -4,9 +4,9 @@
 namespace models;
 
 
-use core\base\BaseModel;
+use core\base\BaseDbObjet;
 
-class User extends BaseModel
+class User extends BaseDbObjet
 {
     /** @var int ID пользователя */
     public $id;

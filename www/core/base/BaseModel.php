@@ -3,140 +3,22 @@
 
 namespace core\base;
 
-use core\application\Application;
-use core\application\components\DbConnection;
+
 use core\validators\Validator;
-use PDO;
 
 /**
  * Class BaseModel
  */
-abstract class BaseModel extends BaseObject
+class BaseModel extends BaseObject
 {
     /** @var array[] Массив ошибок */
     private $errors = [];
     /** @var array Массив валидаторов */
     private $validators;
-    /** @var string Запрос к базе */
-    private $query;
-    /** @var DbConnection */
-    private $connection;
-
-    /**
-     * Получает первичный ключ
-     *
-     * @return string
-     */
-    abstract public function primaryKey();
-
-    /**
-     * Получает название таблицы
-     *
-     * @return string
-     */
-    abstract public function tableName();
-
-    /**
-     * Получает лейблы для полей
-     *
-     * @return array
-     */
-    abstract public function labels();
-
-    /**
-     * Подготовка запроса
-     *
-     * @return \PDOStatement
-     */
-    public function prepareQuery()
-    {
-        return $this->connection->prepare($this->query);
-    }
-
-    /**
-     * Исполнение запроса
-     *
-     * @return bool
-     */
-    public function executeQuery()
-    {
-        $statement = $this->prepareQuery();
-
-        return $statement->execute();
-    }
-
-    /**
-     * Собираем запрос
-     *
-     * @param string|array $condition
-     * @return $this
-     */
-    public function find($condition = null)
-    {
-        $this->query = 'SELECT * FROM' . $this->tableName();
-
-        if (!empty($condition)) {
-            $this->query .= 'WHERE ';
-
-            if (is_array($condition)) {
-                $lastConditionKey = end($condition);
-                reset($condition);
-
-                foreach ($condition as $key => $value) {
-                    $this->query .= $key . '=' . $value;
-
-                    if ($key !== $lastConditionKey) {
-                        $this->query .= ' AND ';
-                    }
-                }
-            } else {
-                $this->query .= $condition;
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Получает один элемент
-     *
-     * @return bool|BaseModel
-     */
-    public function one()
-    {
-        if ($dbResult = $this->executeQuery()) {
-            return $dbResult->fetchObject(static::class);
-        }
-
-        return false;
-    }
-
-    /**
-     * Получает все элементы
-     *
-     * @return bool|BaseModel
-     */
-    public function all()
-    {
-        if ($dbResult = $this->executeQuery()) {
-            return $dbResult->fetchAll(PDO::FETCH_CLASS, static::class);
-        }
-
-        return false;
-    }
-
-    /**
-     * Cjplf
-     */
-    public function save()
-    {
-
-    }
 
     /** @inheritDoc */
     public function init()
     {
-        $this->connection = Application::getInstance()->db;
         $this->createValidators();
     }
 
@@ -214,13 +96,6 @@ abstract class BaseModel extends BaseObject
     {
         $this->errors[$attribute][] = $message;
     }
-
-    /**
-     * Получение правил валидации
-     *
-     * @return array
-     */
-    protected abstract function getRules();
 
     /**
      * Создаёт валидаторы
