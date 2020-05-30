@@ -20,11 +20,8 @@ class User extends BaseDbObjet
     public $passwordRepeat;
     /** @var string Капча */
     public $captcha;
-
-    /** @var boolean Авторизован? */
-    private $isUthorized = false;
-    /** @var string md5 хэш пароля  */
-    private $pwdHash;
+    /** @var string Хэш пароля */
+    public $pwd_hash;
 
     /** @inheritDoc */
     public function primaryKey()
@@ -48,14 +45,17 @@ class User extends BaseDbObjet
                 'params' => [
                     'allowEmpty' => false,
                     'min' => 3,
-                    'max' => 15
+                    'max' => 15,
+                    'latinOnly' => true,
+                    'message' => 'Логин может содержать только латинские буквы и цифры. Длина от 3 до 15 символов.'
                 ]
             ],
             [
                 'attributes' => ['name'],
                 'validator' => 'string',
                 'params' => [
-                    'allowEmpty' => false
+                    'allowEmpty' => false,
+                    'max' => 100,
                 ]
             ],
             [
@@ -64,22 +64,21 @@ class User extends BaseDbObjet
                 'params' => [
                     'allowEmpty' => false,
                     'min' => 6,
-                    'max' => 12
-                ]
-            ],
-            [
-                'attributes' => ['isUthorized'],
-                'validator' => 'bool',
-                'params' => [
-                    'allowEmpty' => false,
+                    'max' => 12,
+                    'latinOnly' => true,
+                    'message' => 'Пароли не совпадают.
+                                  Либо не удовлетвояют условиям. 
+                                  Пароль должен содержать от 6 до 12 символов латинского алфавита и цифр.'
                 ]
             ],
             [
                 'attributes' => ['captcha'],
-                'validator' => 'string',
+                'validator' => 'captcha',
                 'params' => [
                     'allowEmpty' => false,
-                    'max' => 4
+                    'max' => 4,
+                    'latinOnly' => true,
+                    'message' => 'Неверный проверочный код.'
                 ]
             ],
         ];
@@ -100,7 +99,11 @@ class User extends BaseDbObjet
     /** @inheritDoc */
     public function validate()
     {
+        $this->pwd_hash = $this->convertPassword();
+
         if ($this->password !== $this->passwordRepeat) {
+            $this->addError('password', 'Пароли не совпадают.');
+            $this->addError('passwordRepeat', 'Пароли не совпадают.');
             return false;
         }
 
@@ -108,27 +111,16 @@ class User extends BaseDbObjet
     }
 
     /**
-     * Проверяет есть ли пользователь с заданными логином и паролем.
-     * Если такой есть, устанавливаем флаг авторизации.
+     * Проверяет есть ли такой пользователь
+     *
+     * @return bool
      */
-    public function login()
+    public function checkExists()
     {
-        $findUser = $this->find([
+        return (bool)$this->find([
             'login' => $this->login,
             'pwd_hash' => $this->convertPassword()
         ])->one();
-
-        if ($findUser) {
-            $this->isUthorized = true;
-        }
-    }
-
-    /**
-     * Регистрация нового пользователя
-     */
-    public function register()
-    {
-
     }
 
     /**
@@ -136,6 +128,6 @@ class User extends BaseDbObjet
      */
     private function convertPassword()
     {
-        $this->pwdHash = md5($this->password);
+        return md5($this->password);
     }
 }

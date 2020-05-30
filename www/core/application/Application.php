@@ -3,28 +3,23 @@
 
 namespace core\application;
 
+use core\application\components\Captcha;
 use core\application\components\DbConnection;
 use core\application\components\Router;
 use core\application\components\Session;
-use models\User;
+use core\application\components\User;
 
 /**
  * Class Application
  */
 class Application
 {
-    /** @var Session */
-    public $session;
-    /** @var User */
-    public $user;
     /** @var DbConnection */
     public $db;
 
 
     /** @var Application */
     private static $instance;
-    /** @var Router */
-    private $router;
 
     /**
      * Получение экземпляра приложения
@@ -45,11 +40,9 @@ class Application
      */
     public function start()
     {
-        $this->session->start();
-        $this->router->run();
-        $this->db->getInstance();
-
-        $this->user = new User();
+        Session::start();
+        Router::run();
+        $this->db= DbConnection::getInstance();
     }
 
     /**
@@ -74,8 +67,6 @@ class Application
      */
     private function __construct()
     {
-        $this->session = new Session();
-        $this->router = new Router();
         $this->db = DbConnection::getInstance();
     }
 

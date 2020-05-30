@@ -8,6 +8,9 @@ use PDO;
 class DbConnection
 {
     /** @var PDO  */
+    public $connect;
+
+    /** @var static  */
     private static $instance;
     /** @var array */
     private static $config;
@@ -42,13 +45,12 @@ class DbConnection
     private function __construct () {
         $config = require_once ROOT_DIR . 'config/db.php';
 
-        $this->instance = new PDO(
+        $this->connect = new PDO(
             $config['dsn'],
             $config['username'],
             $config['passwd'],
             $config['options']
         );
-
     }
 
     private function __clone () {}

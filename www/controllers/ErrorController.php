@@ -10,6 +10,6 @@ class ErrorController extends BaseController
 {
     public function action404()
     {
-        $this->render('404', ['message' => 'asd']);
+        $this->render('404');
     }
 }

@@ -14,7 +14,7 @@ abstract class Validator
     /** @var mixed Валидируемое значение */
     public $value;
     /** @var string Сообщение об ошибке, если есть */
-    protected $message;
+    public $message;
 
     /**
      * Validator constructor.
@@ -31,16 +31,14 @@ abstract class Validator
     /**
      * Создание валидатора
      *
-     * @param string $name
+     * @param string $class
      * @param mixed $value
      * @param array $params
      * @return Validator
      */
-    public static function createValidator($name, $value, $params = [])
+    public static function createValidator($class, $value, $params = [])
     {
-        $validatorClass = ucfirst($name) . 'Validator';
-
-        return new $validatorClass($value, $params);
+        return new $class($value, $params);
     }
 
     /**
@@ -49,16 +47,6 @@ abstract class Validator
      * @return bool
      */
     abstract public function validate();
-
-    /**
-     * Возвращает сообщение об ошибке
-     *
-     * @return string
-     */
-    public function getMessage()
-    {
-        return $this->message;
-    }
 
     /**
      * Заполняет поля класса

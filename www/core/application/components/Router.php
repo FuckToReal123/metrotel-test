@@ -4,6 +4,8 @@
 namespace core\application\components;
 
 use controllers\ErrorController;
+use core\application\Application;
+use core\base\BaseController;
 
 /**
  * Class Router
@@ -19,6 +21,17 @@ final class Router
     public static function run()
     {
         $uri = ServerUtils::getUri();
+
+        var_dump($_SESSION);
+        var_dump(Session::get('user'));
+        var_dump(User::isGuest());
+        die;
+
+        if (User::isGuest()
+            && strpos($uri, 'auth') === false
+        ) {
+            BaseController::redirect('/auth/login');
+        }
 
         if (!array_key_exists($uri, self::$routes)) {
             $uriParts = explode('/', $uri);
@@ -46,7 +59,7 @@ final class Router
             $controller = new $controllerClass();
 
             if (method_exists($controller, $actionName)) {
-                call_user_func_array([$controller, $actionName], $params);
+                return call_user_func_array([$controller, $actionName], $params);
             }
         }
 

@@ -16,12 +16,6 @@ class BaseModel extends BaseObject
     /** @var array Массив валидаторов */
     private $validators;
 
-    /** @inheritDoc */
-    public function init()
-    {
-        $this->createValidators();
-    }
-
     /**
      * Получение лейбля для поля
      *
@@ -46,13 +40,15 @@ class BaseModel extends BaseObject
      */
     public function validate()
     {
+        $this->createValidators();
+
         foreach ($this->validators as $attribute => $validator) {
             if (!$validator->validate()) {
-                $this->addError($attribute, $validator->getMessage());
+                $this->addError($attribute, $validator->message);
             }
         }
 
-        return !$this->hasErrors();
+        return $this->hasErrors();
     }
 
     /**
@@ -105,12 +101,12 @@ class BaseModel extends BaseObject
     private function createValidators()
     {
         foreach ($this->getRules() as $rule) {
-            $validatorClass = 'core\Validators\\' . ucfirst($rule['validator']) . 'Validator';
+            $validatorClass = 'core\validators\\' . ucfirst($rule['validator']) . 'Validator';
 
-            if ($validatorClass instanceof Validator) {
+            if (class_exists($validatorClass)) {
                 foreach ($rule['attributes'] as $attribute) {
-                    $this->validators[$attribute][] = Validator::createValidator(
-                        $rule['validator'],
+                    $this->validators[$attribute] = Validator::createValidator(
+                        $validatorClass,
                         $this->$attribute,
                         $rule['params']
                     );

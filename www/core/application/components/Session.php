@@ -11,7 +11,7 @@ final class Session
     /**
      * Запускает сессию
      */
-    public function start()
+    public static function start()
     {
         session_start();
     }
@@ -48,5 +48,16 @@ final class Session
         if (isset($_SESSION[$key])) {
             unset($_SESSION[$key]);
         }
+    }
+
+    /**
+     * Устанавливает сообщение для показа пользователю
+     *
+     * @param $type
+     * @param $message
+     */
+    public static function setFlash($type, $message)
+    {
+        self::set('flash', ['type' => $type, 'message' => $message]);
     }
 }

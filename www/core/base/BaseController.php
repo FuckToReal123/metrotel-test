@@ -8,7 +8,10 @@ namespace core\base;
  */
 class BaseController
 {
-    /** @var array Название лейаута */
+    /** @var string Имя лейаута */
+    public $layoutName = 'default';
+
+        /** @var array Название лейаута */
     private $layout;
     /** @var string Директори с представлениями относящимися к контроллеру */
     private $viewsDir;
@@ -28,8 +31,8 @@ class BaseController
             )) . '/';
 
         $this->layout = [
-            'header' => ROOT_DIR . 'layouts/' . $layoutName . '/header.php',
-            'footer' => ROOT_DIR . 'layouts/' . $layoutName . '/footer.php'
+            'header' => ROOT_DIR . 'layouts/' . $this->layoutName . '/header.php',
+            'footer' => ROOT_DIR . 'layouts/' . $this->layoutName . '/footer.php'
         ];
     }
 
@@ -63,6 +66,16 @@ class BaseController
         $this->getFileContent($this->viewsDir . $view . '.php', $data);
 
         echo ob_get_clean();
+    }
+
+    /**
+     * Производит редирект
+     *
+     * @param $location
+     */
+    public static function redirect($location)
+    {
+        header("Location:{$location}");
     }
 
     /**

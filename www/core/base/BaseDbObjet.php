@@ -13,6 +13,8 @@ abstract class BaseDbObjet extends BaseModel
     private $query;
     /** @var DbConnection */
     private $connection;
+    /** @var \PDOStatement */
+    private $statement;
 
     /**
      * Получает первичный ключ
@@ -39,34 +41,43 @@ abstract class BaseDbObjet extends BaseModel
     public function init()
     {
         $this->connection = Application::getInstance()->db;
+        $this->connection->connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        parent::init();
     }
 
     /**
      * Подготовка запроса
-     *
-     * @param string $query
-     * @return \PDOStatement
      */
-    public function prepareQuery($query)
+    public function prepareQuery()
     {
-        return $this->connection->prepare(empty($query) ? $this->query : $query);
+        $this->statement = $this->connection->connect->prepare($this->query);
+    }
+
+    /**
+     * Биндит параметры в запрос
+     *
+     * @param $values
+     */
+    public function bindValues($values)
+    {
+        foreach ($values as $name) {
+            $this->statement->bindValue(":{$name}", $this->$name);
+        }
     }
 
     /**
      * Исполнение запроса
      *
-     * @param string $query
      * @return \PDOStatement|bool
      */
-    public function executeQuery($query = '')
+    public function executeQuery()
     {
-        $statement = $this->prepareQuery($query);
-
-        if ($statement->execute()) {
-            return $statement;
+        if (!$this->statement->execute()) {
+            $this->addError('db', $this->statement->errorInfo());
+            return false;
         }
 
-        return false;
+        return $this->statement;
     }
 
     /**
@@ -80,26 +91,26 @@ abstract class BaseDbObjet extends BaseModel
         $this->query = 'SELECT * FROM ' . $this->tableName();
 
         if (!empty($condition)) {
-            $this->query .= 'WHERE ';
+            $this->query .= ' WHERE ';
 
             if (is_array($condition)) {
-                end($condition);
-                $lastConditionKey = key($condition);
-                reset($condition);
+                $attributes = array_keys($condition);
+                $conditionArray = [];
 
-                foreach ($condition as $key => $value) {
-                    $this->query .= $key . '=' . $value;
-
-                    if ($key !== $lastConditionKey) {
-                        $this->query .= ' AND ';
-                    }
+                foreach ($attributes as $key) {
+                    $conditionArray[] = "{$key} = :{$key}";
                 }
+
+                $conditionString = implode(' AND ', $conditionArray);
+
+                $this->query .= "{$conditionString};";
+
+                $this->prepareQuery();
+                $this->bindValues($attributes);
             } else {
-                $this->query .= $condition;
+                $this->query .= "{$condition};";
             }
         }
-
-        $this->query .= ';';
 
         return $this;
     }
@@ -140,72 +151,55 @@ abstract class BaseDbObjet extends BaseModel
      */
     public function save()
     {
-        $this->query = 'INSERT INTO ' . $this->tableName() . '(';
-        $columnNames = $this->getTableColumnNames();
-
-        end($columnNames);
-        $lastColumnKey = key($columnNames);
-        reset($columnNames);
-
-        foreach ($this->getTableColumnNames() as $key => $colName) {
-            $this->query .= $colName;
-
-            if ($key !== $lastColumnKey) {
-                $this->query .= ',';
-            }
-
-            $this->query .= ')';
+        if (!$this->validate()) {
+            return false;
         }
 
-        $this->query .= ' VALUES (';
+        $attributes = $this->getAttributes($this->getTableColumnNames());
+        $insertedNames = array_keys(array_filter($attributes));
 
-        $attributes = $this->getAttributes($columnNames);
+        $insertedFields = implode(', ', $insertedNames);
+        $insertedValues = ':' . implode(', :', $insertedNames);
 
-        end($attributes);
-        $lastAttributesKey = key($attributes);
-        reset($attributes);
+        $this->query = "INSERT INTO {$this->tableName()} ({$insertedFields}) VALUES ({$insertedValues});";
 
+        $this->prepareQuery();
+        $this->bindValues($insertedNames);
+        $this->executeQuery();
 
-        foreach ($attributes as $key => $value) {
-            $this->query .= $value;
+        $this->{$this->primaryKey()} = $this->connection->connect->lastInsertId();
 
-            if ($key !== $lastAttributesKey) {
-                $this->query .= ',';
-            }
-        }
-
-        $this->query .= ');';
-
-        return (bool)$this->executeQuery();
+        return (bool)$this->statement;
     }
 
     /**
-     * Обновление данных в базе
+     * Обновление записи
      *
      * @return bool
      * @throws \ReflectionException
      */
     public function update()
     {
-        $this->query = 'UPDATE ' . $this->tableName() . ' SET ';
-
-        $attributes = $this->getAttributes($this->getTableColumnNames());
-
-        end($attributes);
-        $lastAttributesKey = key($attributes);
-        reset($attributes);
-
-        foreach ($attributes as  $key => $attribute) {
-            $this->query .= $key . ' = ' . $attribute;
-
-            if ($key !== $lastAttributesKey) {
-                $this->query .= ',';
-            }
+        if (!$this->validate()) {
+            return false;
         }
 
-        $this->query .= ';';
+        $attributes = $this->getAttributes();
 
-        return (bool)$this->executeQuery();
+        $this->query = "UPDATE {$this->tableName()} SET";
+
+        foreach ($attributes as $key => $attribute) {
+            $this->query .= " {$key}={$attribute}";
+        }
+
+        $pk = $this->primaryKey();
+
+        $this->query .= " WHERE {$pk} = {$this->$pk};";
+
+        $this->prepareQuery();
+        $this->executeQuery();
+
+        return (bool)$this->statement;
     }
 
     /**
@@ -217,7 +211,7 @@ abstract class BaseDbObjet extends BaseModel
     {
         $pk = $this->primaryKey();
 
-        $this->query = 'DELETE FROM ' . $this->tableName() . ' WHERE ' . $pk . ' = ' . $this->$pk . ';';
+        $this->query = "DELETE FROM {$this->tableName()}  WHERE {$pk} = {$this->$pk};";
 
         return (bool)$this->executeQuery();
     }
@@ -236,12 +230,15 @@ abstract class BaseDbObjet extends BaseModel
      */
     private function getTableColumnNames()
     {
-        $query = "SELECT COLUMN_NAME 
+        $this->query = "SELECT COLUMN_NAME 
                     FROM INFORMATION_SCHEMA.COLUMNS
                     WHERE TABLE_SCHEMA = '{$this->connection->getDbName()}'
-                    AND TABLE_NAME = '{$this->tableName()}'
+                    AND TABLE_NAME = '{$this->tableName()}';
                  ";
 
-        return $this->executeQuery($query)->fetchAll();
+        $this->prepareQuery();
+        $this->executeQuery();
+
+        return array_values(array_column($this->statement->fetchAll(),'COLUMN_NAME'));
     }
 }
