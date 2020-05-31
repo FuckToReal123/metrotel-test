@@ -4,17 +4,14 @@
 namespace core\base;
 
 
-use core\application\Application;
 use core\application\components\DbConnection;
 
 abstract class BaseDbObjet extends BaseModel
 {
     /** @var string Запрос к базе */
     private $query;
-    /** @var DbConnection */
-    private $connection;
-    /** @var \PDOStatement */
-    private $statement;
+    /** @var array */
+    private $bindValues = [];
 
     /**
      * Получает первичный ключ
@@ -40,29 +37,7 @@ abstract class BaseDbObjet extends BaseModel
     /** @inheritDoc */
     public function init()
     {
-        $this->connection = Application::getInstance()->db;
-        $this->connection->connect->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         parent::init();
-    }
-
-    /**
-     * Подготовка запроса
-     */
-    public function prepareQuery()
-    {
-        $this->statement = $this->connection->connect->prepare($this->query);
-    }
-
-    /**
-     * Биндит параметры в запрос
-     *
-     * @param $values
-     */
-    public function bindValues($values)
-    {
-        foreach ($values as $name) {
-            $this->statement->bindValue(":{$name}", $this->$name);
-        }
     }
 
     /**
@@ -72,12 +47,14 @@ abstract class BaseDbObjet extends BaseModel
      */
     public function executeQuery()
     {
-        if (!$this->statement->execute()) {
-            $this->addError('db', $this->statement->errorInfo());
+        $statement = $this->prepareQuery();
+
+        if (!$statement->execute()) {
+            $this->addError('db', var_export($statement->errorInfo(), true));
             return false;
         }
 
-        return $this->statement;
+        return $statement;
     }
 
     /**
@@ -105,8 +82,7 @@ abstract class BaseDbObjet extends BaseModel
 
                 $this->query .= "{$conditionString};";
 
-                $this->prepareQuery();
-                $this->bindValues($attributes);
+                $this->bindValues = $condition;
             } else {
                 $this->query .= "{$condition};";
             }
@@ -118,7 +94,7 @@ abstract class BaseDbObjet extends BaseModel
     /**
      * Получает один элемент
      *
-     * @return bool|BaseModel
+     * @return bool|static
      */
     public function one()
     {
@@ -132,12 +108,12 @@ abstract class BaseDbObjet extends BaseModel
     /**
      * Получает все элементы
      *
-     * @return bool|BaseDbObjet
+     * @return bool|static[]
      */
     public function all()
     {
         if ($dbResult = $this->executeQuery()) {
-            return $dbResult->fetchAll(PDO::FETCH_CLASS, static::class);
+            return $dbResult->fetchAll(\PDO::FETCH_CLASS, static::class);
         }
 
         return false;
@@ -163,13 +139,13 @@ abstract class BaseDbObjet extends BaseModel
 
         $this->query = "INSERT INTO {$this->tableName()} ({$insertedFields}) VALUES ({$insertedValues});";
 
-        $this->prepareQuery();
-        $this->bindValues($insertedNames);
-        $this->executeQuery();
+        $this->bindValues = array_filter($attributes);
 
-        $this->{$this->primaryKey()} = $this->connection->connect->lastInsertId();
+        $statement = $this->executeQuery();
 
-        return (bool)$this->statement;
+        $this->{$this->primaryKey()} = $this->getConnection()->lastInsertId();
+
+        return (bool)$statement;
     }
 
     /**
@@ -185,21 +161,31 @@ abstract class BaseDbObjet extends BaseModel
         }
 
         $attributes = $this->getAttributes();
+        unset($attributes[$this->primaryKey()]);
+        $attributes = array_filter($attributes);
 
         $this->query = "UPDATE {$this->tableName()} SET";
 
+        end($attributes);
+        $lastAttributesKey = key($attributes);
+        reset($attributes);
+
         foreach ($attributes as $key => $attribute) {
-            $this->query .= " {$key}={$attribute}";
+            $this->query .= " {$key}=:{$key}";
+            if ($key !== $lastAttributesKey) {
+                $this->query .= ',';
+            }
         }
+
+        $this->bindValues = array_filter($attributes);
 
         $pk = $this->primaryKey();
 
         $this->query .= " WHERE {$pk} = {$this->$pk};";
 
-        $this->prepareQuery();
-        $this->executeQuery();
+        $statement = $this->executeQuery();
 
-        return (bool)$this->statement;
+        return (bool)$statement;
     }
 
     /**
@@ -207,13 +193,39 @@ abstract class BaseDbObjet extends BaseModel
      *
      * @return bool
      */
-    public function delete()
+    public function deleteByPk($pk)
     {
-        $pk = $this->primaryKey();
+        $pkName = $this->primaryKey();
 
-        $this->query = "DELETE FROM {$this->tableName()}  WHERE {$pk} = {$this->$pk};";
+        $this->query = "DELETE FROM {$this->tableName()}  WHERE {$pkName} = {$pk};";
 
         return (bool)$this->executeQuery();
+    }
+
+    /**
+     * Возвращает объект класса
+     *
+     * @return static
+     */
+    public static function model()
+    {
+        return new static();
+    }
+
+    /**
+     * Подготовка запроса
+     *
+     * @return bool|\PDOStatement
+     */
+    protected function prepareQuery()
+    {
+        $statement = $this->getConnection()->prepare($this->query);
+
+        foreach ($this->bindValues as $name => $value) {
+            $statement->bindValue(":{$name}", $value);
+        }
+
+        return $statement;
     }
 
     /**
@@ -232,13 +244,33 @@ abstract class BaseDbObjet extends BaseModel
     {
         $this->query = "SELECT COLUMN_NAME 
                     FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_SCHEMA = '{$this->connection->getDbName()}'
+                    WHERE TABLE_SCHEMA = '{$this->getDbName()}'
                     AND TABLE_NAME = '{$this->tableName()}';
                  ";
 
-        $this->prepareQuery();
-        $this->executeQuery();
 
-        return array_values(array_column($this->statement->fetchAll(),'COLUMN_NAME'));
+        $statement = $this->executeQuery();
+
+        return array_values(array_column($statement->fetchAll(),'COLUMN_NAME'));
+    }
+
+    /**
+     * Получает название базы
+     *
+     * @return array|false|string
+     */
+    private function getDbName()
+    {
+        return getenv('MYSQL_DATABASE');
+    }
+
+    /**
+     * Получает коннект
+     *
+     * @return DbConnection|\PDO
+     */
+    private function getConnection()
+    {
+        return DbConnection::getInstance();
     }
 }

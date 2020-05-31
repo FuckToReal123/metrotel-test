@@ -7,9 +7,6 @@ use PDO;
 
 class DbConnection
 {
-    /** @var PDO  */
-    public $connect;
-
     /** @var static  */
     private static $instance;
     /** @var array */
@@ -22,35 +19,18 @@ class DbConnection
      */
     public static function getInstance()
     {
+        $config = require_once ROOT_DIR . 'config/db.php';
+
         if (!self::$instance) {
-            self::$instance = new self;
+            self::$instance =  new PDO(
+                $config['dsn'],
+                $config['username'],
+                $config['passwd'],
+                $config['options']
+            );
         }
 
         return self::$instance;
-    }
-
-    /**
-     * Возвращает название базы
-     *
-     * @return string
-     */
-    public static function getDbName()
-    {
-        return getenv('MYSQL_DATABASE');
-    }
-
-    /**
-     * DbConnection constructor.
-     */
-    private function __construct () {
-        $config = require_once ROOT_DIR . 'config/db.php';
-
-        $this->connect = new PDO(
-            $config['dsn'],
-            $config['username'],
-            $config['passwd'],
-            $config['options']
-        );
     }
 
     private function __clone () {}

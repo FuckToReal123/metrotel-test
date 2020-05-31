@@ -9,10 +9,11 @@ use \core\application\components\Session;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/css/main.css" rel="stylesheet">
+    <link href="/assets/css/contact.css" rel="stylesheet">
     <script src="/assets/js/jquery-3.5.1.min.js" type="text/javascript"></script>
     <script src="/assets/js/bootstrap.min.js" type="text/javascript"></script>
-    <script src="/assets/js/auth.js" type="text/javascript"></script>
     <script src="/assets/js/main.js" type="text/javascript"></script>
+    <script src="/assets/js/contact.js" type="text/javascript"></script>
 </head>
 <body>
 <header>
@@ -31,11 +32,14 @@ use \core\application\components\Session;
                     <a class="nav-link" href="/contact/create/">Добавить контакт</a>
                 </li>
             </ul>
+            <div class="my-2 my-lg-0 nav-item">
+                <a class="nav-link" href="/auth/logout/">Выход</a>
+            </div>
         </div>
     </nav>
 </header>
 <div class="wrap text-center">
-    <main role="main" class="container">
+    <main class="container">
         <?php if ($flash = Session::get('flash')): ?>
             <div class="text-left alert alert-<?= $flash['type'] ?>"><?= $flash['message'] ?></div>
             <?php Session::delete('flash'); ?>

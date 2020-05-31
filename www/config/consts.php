@@ -7,4 +7,4 @@ define('DEV_MODE', getenv('IS_DEV'));
 /** @var string Папка со шрифтами */
 define('FONTS_DIR', ROOT_DIR . 'assets/fonts/');
 /** @var string Папка с фото контактов */
-define('PHOTOS_DIR', ROOT_DIR . 'upload/images/');
+define('PHOTOS_DIR', ROOT_DIR . 'web/upload/images/');

@@ -1,12 +1,13 @@
 <?php
 /**
  * @var $model \models\Contact
+ * @var $action string
  */
 ?>
 
-<form action="<?= $model->id ? "/contact/update/{$model->id}" : "/contact/create/" ?>" class="login-form">
+<form method="POST" action="<?= $action ?>" class="user-form" enctype="multipart/form-data">
     <div class="form-group">
-        <label for="name"><?= $model->getLabel('name') ?></label>
+        <label for="name"><?= $model->getLabel('name') ?><span class="required">*</span></label>
         <input
             name="name"
             type="text"
@@ -35,6 +36,7 @@
             type="tel"
             id="phone"
             class="form-control"
+            value="<?= $model->phone ?>"
             placeholder="<?= $model->getLabel('phone') ?>"
         >
     </div>
@@ -45,9 +47,11 @@
                 type="email"
                 id="email"
                 class="form-control"
+                value="<?= $model->email ?>"
                 placeholder="<?= $model->getLabel('email') ?>"
         >
     </div>
+    <input type="hidden" name="MAX_FILE_SIZE" value="2097152">
     <div class="form-group">
         <label for="photo"><?= $model->getLabel('photo') ?></label>
         <input
@@ -55,9 +59,12 @@
                 type="file"
                 id="photo"
                 class="form-control"
+                value="<?= $model->photo ?>"
                 placeholder="<?= $model->getLabel('photo') ?>"
         >
     </div>
     <br>
     <button class="btn btn-lg btn-primary" type="submit">Сохранить</button>
 </form>
+<br><br>
+<p>Поля помеченные <span class="required">*</span> обязательны для заполнения.</p>

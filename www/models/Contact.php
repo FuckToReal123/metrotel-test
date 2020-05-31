@@ -4,6 +4,7 @@
 namespace models;
 
 
+use core\application\components\ServerUtils;
 use core\base\BaseDbObjet;
 
 class Contact extends BaseDbObjet
@@ -61,11 +62,11 @@ class Contact extends BaseDbObjet
             ],
             [
                 'attributes' => ['photo'],
-                'validator' => 'string',
+                'validator' => 'photo',
                 'params' => [
                     'allowEmpty' => true,
-                    'max' => 200,
-                    'latinOnly' => true,
+                    'max' => 400,
+                    'extensions' => ['jpeg', 'jpg', 'png'],
                     'message' => 'Не удалось загрузить файл.'
                 ]
             ],
@@ -102,5 +103,13 @@ class Contact extends BaseDbObjet
             'name' => 'Имя',
             'last_name' => 'Фамилия',
         ];
+    }
+
+    /** @inheritDoc */
+    public function init()
+    {
+        $this->user_id = \core\application\components\User::getCurUser()->id;
+
+        parent::init();
     }
 }

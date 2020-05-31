@@ -5,6 +5,7 @@ try {
     ini_set('error_reporting', E_ALL & ~E_DEPRECATED & ~E_STRICT);
     ini_set('display_startup_errors', 'Off');
     ini_set('display_startup_errors', 'Off');
+    ini_set('file_uploads', 'On');
 
     require __DIR__ . '/config/consts.php';
     require __DIR__ . '/core/Autoloader.php';

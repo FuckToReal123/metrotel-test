@@ -1,0 +1,24 @@
+.contact-photo {
+    width: 150px;
+    height: 150px;
+}
+
+.triangle {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid #fff;
+    position: relative;
+    top: -2px;
+    right: -5px;
+}
+
+.triangle.rotated {
+    transform: rotate(180deg);
+}
+
+.table .thead-dark th {
+    cursor: pointer;
+}

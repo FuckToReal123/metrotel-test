@@ -119,7 +119,6 @@ class User extends BaseDbObjet
     {
         return (bool)$this->find([
             'login' => $this->login,
-            'pwd_hash' => $this->convertPassword()
         ])->one();
     }
 

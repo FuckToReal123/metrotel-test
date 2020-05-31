@@ -68,9 +68,9 @@ class AuthController extends BaseController
                 ])->one();
 
                 $model->load(array_filter($newmodel->getAttributes()));
-                Session::set('user', $model);
+                \core\application\components\User::setCurUser($model);
                 Session::setFlash('success', 'Добро пожаловать ' . $model->login . '!');
-                $this->redirect('/contacts/index/');
+                $this->redirect('/contact/index/');
             } else {
                 $errorsText = "<ul>";
 
@@ -86,6 +86,15 @@ class AuthController extends BaseController
         }
 
         return $this->render('login', ['model' => $model]);
+    }
+
+    /**
+     * Выход
+     */
+    public function actionLogout()
+    {
+        Session::delete('user');
+        self::redirect('/auth/login/');
     }
 
     /**

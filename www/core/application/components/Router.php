@@ -22,11 +22,6 @@ final class Router
     {
         $uri = ServerUtils::getUri();
 
-        var_dump($_SESSION);
-        var_dump(Session::get('user'));
-        var_dump(User::isGuest());
-        die;
-
         if (User::isGuest()
             && strpos($uri, 'auth') === false
         ) {
